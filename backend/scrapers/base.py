@@ -18,11 +18,11 @@ class BaseScraper(ABC):
         self.backoff = backoff if backoff is not None else [2, 8, 20]
         self.timeout = timeout
 
-    async def ejecutar(self, patente: str) -> ScraperResult:
+    async def ejecutar(self, patente: str, **kwargs) -> ScraperResult:
         for intento in range(1, self.max_retries + 1):
             try:
                 datos = await asyncio.wait_for(
-                    self._ejecutar(patente),
+                    self._ejecutar(patente, **kwargs),
                     timeout=self.timeout,
                 )
                 return ScraperResult(exito=True, datos=datos, intentos=intento)
@@ -33,5 +33,5 @@ class BaseScraper(ABC):
                     return ScraperResult(exito=False, error=str(e), intentos=intento)
 
     @abstractmethod
-    async def _ejecutar(self, patente: str) -> dict:
+    async def _ejecutar(self, patente: str, **kwargs) -> dict:
         ...

@@ -4,10 +4,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from routes.consulta import router as consulta_router
+from scrapers.costos import CostosScraper
+from services.consulta_manager import registrar_scraper
+from db.models import TipoConsulta
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    registrar_scraper(TipoConsulta.costos, CostosScraper())
     yield
 
 

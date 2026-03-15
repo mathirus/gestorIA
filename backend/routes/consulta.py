@@ -2,9 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from db.database import get_db
+from db.database import get_db, async_session
 from db.models import Consulta, SubConsulta, EstadoConsulta, TipoConsulta
 from models.schemas import ConsultaCreate, ConsultaResponse
+from services.consulta_manager import ejecutar_consulta, ejecutar_sub_consulta
 
 router = APIRouter(prefix="/api")
 
@@ -34,7 +35,7 @@ async def crear_consulta(
     await db.commit()
     await db.refresh(consulta, ["sub_consultas"])
 
-    # TODO: background_tasks.add_task(ejecutar_consulta, consulta.id) — wired in Task 6
+    background_tasks.add_task(ejecutar_consulta, consulta.id, async_session)
 
     return _build_response(consulta)
 
@@ -75,7 +76,7 @@ async def reintentar_sub_consulta(
     sub.intentos = 0
     sub.error = None
     await db.commit()
-    # TODO: background_tasks.add_task(ejecutar_sub_consulta, consulta_id, tipo) — wired in Task 6
+    background_tasks.add_task(ejecutar_sub_consulta, consulta_id, tipo, async_session)
     return {"status": "reintentando"}
 
 
