@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diagrama - Transferencia Vehicular Argentina</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 8px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 1rem;
+    margin-bottom: 50px;
+  }
+
+  /* FLOW */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* STEP CARD */
+  .step {
+    width: 100%;
+    max-width: 800px;
+    position: relative;
+  }
+
+  .step-card {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 16px;
+    padding: 28px 32px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+  }
+
+  .step-card:hover {
+    border-color: rgba(129, 140, 248, 0.4);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(129, 140, 248, 0.1);
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 5px;
+    height: 100%;
+  }
+
+  .step-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 14px;
+  }
+
+  .step-number {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .step-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .step-who {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+
+  .step-body {
+    padding-left: 64px;
+  }
+
+  .step-desc {
+    color: #cbd5e1;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 12px;
+  }
+
+  .step-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .detail-tag {
+    background: rgba(148, 163, 184, 0.1);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+
+  .detail-tag strong { color: #e2e8f0; }
+
+  .step-tip {
+    background: rgba(34, 197, 94, 0.08);
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: #86efac;
+    margin-top: 10px;
+  }
+
+  .step-tip::before {
+    content: '💡 OPORTUNIDAD DIGITAL: ';
+    font-weight: 700;
+  }
+
+  .step-risk {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 0.82rem;
+    color: #fca5a5;
+    margin-top: 10px;
+  }
+
+  .step-risk::before {
+    content: '⚠️ RIESGO: ';
+    font-weight: 700;
+  }
+
+  /* COLORS PER STEP */
+  .step-0 .step-card::before { background: linear-gradient(180deg, #6366f1, #818cf8); }
+  .step-0 .step-number { background: linear-gradient(135deg, #6366f1, #818cf8); }
+
+  .step-1 .step-card::before { background: linear-gradient(180deg, #f59e0b, #fbbf24); }
+  .step-1 .step-number { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+
+  .step-2 .step-card::before { background: linear-gradient(180deg, #ef4444, #f87171); }
+  .step-2 .step-number { background: linear-gradient(135deg, #ef4444, #f87171); }
+
+  .step-3 .step-card::before { background: linear-gradient(180deg, #3b82f6, #60a5fa); }
+  .step-3 .step-number { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+
+  .step-4 .step-card::before { background: linear-gradient(180deg, #8b5cf6, #a78bfa); }
+  .step-4 .step-number { background: linear-gradient(135deg, #8b5cf6, #a78bfa); }
+
+  .step-5 .step-card::before { background: linear-gradient(180deg, #ec4899, #f472b6); }
+  .step-5 .step-number { background: linear-gradient(135deg, #ec4899, #f472b6); }
+
+  .step-6 .step-card::before { background: linear-gradient(180deg, #14b8a6, #2dd4bf); }
+  .step-6 .step-number { background: linear-gradient(135deg, #14b8a6, #2dd4bf); }
+
+  .step-7 .step-card::before { background: linear-gradient(180deg, #22c55e, #4ade80); }
+  .step-7 .step-number { background: linear-gradient(135deg, #22c55e, #4ade80); }
+
+  .step-8 .step-card::before { background: linear-gradient(180deg, #06b6d4, #22d3ee); }
+  .step-8 .step-number { background: linear-gradient(135deg, #06b6d4, #22d3ee); }
+
+  /* ARROW */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 50px;
+    position: relative;
+  }
+
+  .arrow-line {
+    width: 3px;
+    height: 36px;
+    border-radius: 2px;
+    background: linear-gradient(180deg, rgba(148, 163, 184, 0.4), rgba(148, 163, 184, 0.15));
+  }
+
+  .arrow-head {
+    width: 0;
+    height: 0;
+    border-left: 8px solid transparent;
+    border-right: 8px solid transparent;
+    border-top: 10px solid rgba(148, 163, 184, 0.35);
+  }
+
+  /* DECISION DIAMOND */
+  .decision {
+    width: 100%;
+    max-width: 500px;
+    position: relative;
+  }
+
+  .decision-card {
+    background: rgba(245, 158, 11, 0.08);
+    border: 2px dashed rgba(245, 158, 11, 0.35);
+    border-radius: 16px;
+    padding: 20px 28px;
+    text-align: center;
+  }
+
+  .decision-icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+
+  .decision-text {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #fbbf24;
+  }
+
+  .decision-sub {
+    font-size: 0.82rem;
+    color: #fcd34d;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+
+  .decision-paths {
+    display: flex;
+    justify-content: center;
+    gap: 100px;
+    margin-top: 8px;
+  }
+
+  .path {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .path-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 4px 14px;
+    border-radius: 20px;
+  }
+
+  .path-yes { background: rgba(34, 197, 94, 0.15); color: #4ade80; }
+  .path-no { background: rgba(239, 68, 68, 0.15); color: #f87171; }
+
+  .path-arrow {
+    width: 2px;
+    height: 16px;
+    background: rgba(148, 163, 184, 0.3);
+  }
+
+  .path-dest {
+    font-size: 0.72rem;
+    color: #94a3b8;
+    text-align: center;
+    max-width: 140px;
+  }
+
+  /* WHO BADGES */
+  .who-gestor { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+  .who-fisico { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+  .who-ambos { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+  .who-registro { background: rgba(20, 184, 166, 0.15); color: #5eead4; border: 1px solid rgba(20, 184, 166, 0.3); }
+
+  /* SUMMARY BAR */
+  .summary {
+    max-width: 800px;
+    margin: 50px auto 0;
+    background: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+    border-radius: 16px;
+    padding: 28px 32px;
+  }
+
+  .summary h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .summary-item {
+    text-align: center;
+    padding: 16px;
+    background: rgba(148, 163, 184, 0.05);
+    border-radius: 12px;
+  }
+
+  .summary-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 4px;
+  }
+
+  .summary-label {
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+
+  .legend {
+    max-width: 800px;
+    margin: 24px auto 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+
+  @media (max-width: 700px) {
+    h1 { font-size: 1.5rem; }
+    .step-card { padding: 20px; }
+    .step-body { padding-left: 0; }
+    .step-who { display: none; }
+    .summary-grid { grid-template-columns: 1fr; }
+    .decision-paths { gap: 40px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Transferencia Vehicular en Argentina</h1>
+  <p class="subtitle">Diagrama de flujo completo — Qué hace un gestor paso a paso</p>
+
+  <div class="flow">
+
+    <!-- PASO 0 -->
+    <div class="step step-0">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <div class="step-title">Consulta Inicial y Presupuesto</div>
+          <span class="step-who who-gestor">GESTOR</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El cliente llega con la intención de comprar/vender un auto. El gestor releva datos del vehículo (marca, modelo, patente, año) y arma un presupuesto con todos los costos desglosados.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Costo:</strong> Sin cargo (consulta)</span>
+            <span class="detail-tag"><strong>Tiempo:</strong> 15-30 min</span>
+            <span class="detail-tag"><strong>Dónde:</strong> Oficina / WhatsApp / Tel</span>
+          </div>
+          <div class="step-tip">Calculadora de costos online en tiempo real. Ingresás patente y provincia → costo total al instante.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 1 -->
+    <div class="step step-1">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <div class="step-title">Due Diligence del Vehículo</div>
+          <span class="step-who who-gestor">GESTOR</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El gestor investiga los antecedentes del auto antes de avanzar. Pide el <strong>Informe de Dominio</strong> (embargos, prendas, robo), consulta el <strong>Formulario 13D</strong> (multas/infracciones) y verifica <strong>deuda de patentes</strong>.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Informe Dominio:</strong> $4.000 - $6.000</span>
+            <span class="detail-tag"><strong>Tiempo:</strong> Mismo día (online)</span>
+            <span class="detail-tag"><strong>Consultas:</strong> DNRPA + SUGIT + Municipio</span>
+          </div>
+          <div class="step-tip">Informe unificado con un solo clic: dominio + patentes + multas + verificación del titular (como icarcheck de Chile).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- DECISIÓN 1 -->
+    <div class="decision">
+      <div class="decision-card">
+        <div class="decision-icon">◆</div>
+        <div class="decision-text">¿El auto está limpio?</div>
+        <div class="decision-sub">Sin embargos, prendas, robo ni inhibiciones</div>
+        <div class="decision-paths">
+          <div class="path">
+            <span class="path-label path-yes">✓ SÍ</span>
+            <div class="path-arrow"></div>
+            <span class="path-dest">Continúa al Paso 2 ↓</span>
+          </div>
+          <div class="path">
+            <span class="path-label path-no">✗ NO</span>
+            <div class="path-arrow"></div>
+            <span class="path-dest">Se frena la operación. Negociar con vendedor o cancelar.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 2 -->
+    <div class="step step-2">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <div class="step-title">Verificación Policial</div>
+          <span class="step-who who-fisico">FÍSICO</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El auto va a una <strong>planta verificadora</strong> autorizada. Un perito revisa número de chasis, motor y VIN, y los compara con la base de datos. Busca adulteraciones y pedidos de secuestro.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Costo:</strong> $15.000 - $25.000</span>
+            <span class="detail-tag"><strong>Tiempo:</strong> 30 min a 2 horas</span>
+            <span class="detail-tag"><strong>Validez:</strong> 150 días</span>
+            <span class="detail-tag"><strong>Obligatoria:</strong> Autos de 2-12 años</span>
+          </div>
+          <div class="step-risk">Si la verificación sale rechazada = números adulterados o auto robado. La operación se cae.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 3 -->
+    <div class="step step-3">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <div class="step-title">Preparación del Formulario 08</div>
+          <span class="step-who who-gestor">GESTOR</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El gestor completa el <strong>Formulario 08</strong> (solicitud de transferencia) con datos del comprador, vendedor, vehículo y precio. Puede hacerlo online (08D en portal DNRPA) o en papel. Verifica que el precio declarado sea coherente con tablas AFIP.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Incluye:</strong> DNI + CUIT ambas partes</span>
+            <span class="detail-tag"><strong>Precio:</strong> Declarativo pero cruzado con AFIP</span>
+            <span class="detail-tag"><strong>Online:</strong> www2.jus.gov.ar</span>
+          </div>
+          <div class="step-tip">Formulario guiado con validación automática: cero errores, cero rechazos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- DECISIÓN 2 -->
+    <div class="decision">
+      <div class="decision-card">
+        <div class="decision-icon">◆</div>
+        <div class="decision-text">¿Supera umbral UIF? (~$92M ARS)</div>
+        <div class="decision-sub">Control AFIP-ARCA-UIF sobre origen de fondos</div>
+        <div class="decision-paths">
+          <div class="path">
+            <span class="path-label path-no">NO supera</span>
+            <div class="path-arrow"></div>
+            <span class="path-dest">Sigue normal ↓</span>
+          </div>
+          <div class="path">
+            <span class="path-label path-yes">SÍ supera</span>
+            <div class="path-arrow"></div>
+            <span class="path-dest">Gestor prepara documentación de origen de fondos</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 4 -->
+    <div class="step step-4">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <div class="step-title">Certificación de Firmas</div>
+          <span class="step-who who-ambos">AMBAS PARTES</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">Comprador y vendedor firman el Formulario 08. Las firmas deben ser certificadas por el <strong>encargado del Registro</strong> (gratis, hasta 2 firmas) o por un <strong>escribano público</strong> (si las partes no pueden ir juntas al Registro).</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>En Registro:</strong> Gratis (reforma 2024)</span>
+            <span class="detail-tag"><strong>Escribano:</strong> $10.000 - $30.000</span>
+            <span class="detail-tag"><strong>Clave:</strong> Firmas = exactas al DNI</span>
+          </div>
+          <div class="step-tip">Red de escribanos con firma a domicilio. A futuro: firma electrónica avanzada (como Chile).</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 5 -->
+    <div class="step step-5">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <div class="step-title">Gestión Impositiva</div>
+          <span class="step-who who-gestor">GESTOR</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El gestor calcula y genera las boletas de pago: <strong>Arancel DNRPA</strong> (1% del valor), <strong>Impuesto de Sellos</strong> (varía por provincia: 3% en BA, distinto en CABA, Córdoba, etc.), y cualquier gasto adicional.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>DNRPA:</strong> 1% del valor</span>
+            <span class="detail-tag"><strong>Sellos BA:</strong> 3%</span>
+            <span class="detail-tag"><strong>Incluye:</strong> Título + Cédula + 2 firmas</span>
+          </div>
+          <div class="step-tip">Cálculo automático de impuestos por provincia + generación de boletas de pago.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 6 -->
+    <div class="step step-6">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <div class="step-title">Presentación en el Registro</div>
+          <span class="step-who who-registro">REGISTRO</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El gestor lleva la carpeta completa al <strong>Registro Seccional</strong>: F08 firmado, título original, cédulas, verificación policial, CUIT, comprobantes de pago, DNI de ambas partes (o poder del gestor). El encargado revisa y aprueba.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Tiempo:</strong> 1 día (con turno)</span>
+            <span class="detail-tag"><strong>Reforma 2024:</strong> Cualquier Registro del país</span>
+            <span class="detail-tag"><strong>Documentos:</strong> 7-8 piezas</span>
+          </div>
+          <div class="step-tip">Tracking en tiempo real del estado del trámite. El gestor digital va por vos.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- DECISIÓN 3 -->
+    <div class="decision">
+      <div class="decision-card">
+        <div class="decision-icon">◆</div>
+        <div class="decision-text">¿El Registro aprueba?</div>
+        <div class="decision-sub">Revisión de la carpeta completa</div>
+        <div class="decision-paths">
+          <div class="path">
+            <span class="path-label path-yes">✓ APROBADO</span>
+            <div class="path-arrow"></div>
+            <span class="path-dest">Inscripción en 24-48hs ↓</span>
+          </div>
+          <div class="path">
+            <span class="path-label path-no">✗ OBSERVADO</span>
+            <div class="path-arrow"></div>
+            <span class="path-dest">Gestor corrige y vuelve a presentar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 7 -->
+    <div class="step step-7">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <div class="step-title">Emisión de Documentación Nueva</div>
+          <span class="step-who who-registro">REGISTRO</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El Registro emite: <strong>Título de propiedad</strong> a nombre del comprador, <strong>Cédula verde</strong> nueva, y certificado de transferencia. El gestor retira todo y lo entrega al cliente.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Tiempo:</strong> 24-48 horas hábiles</span>
+            <span class="detail-tag"><strong>Costo:</strong> Incluido en el arancel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- PASO 8 -->
+    <div class="step step-8">
+      <div class="step-card">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <div class="step-title">Trámites Post-Transferencia</div>
+          <span class="step-who who-gestor">GESTOR</span>
+        </div>
+        <div class="step-body">
+          <p class="step-desc">El gestor coordina los trámites finales: <strong>alta de seguro</strong> a nombre del comprador, <strong>cambio de titularidad de patentes</strong> en la municipalidad, <strong>oblea GNC</strong> si aplica, y verificación de baja del vendedor.</p>
+          <div class="step-details">
+            <span class="detail-tag"><strong>Seguro:</strong> Obligatorio desde día 1</span>
+            <span class="detail-tag"><strong>Patentes:</strong> Cambio en municipalidad</span>
+            <span class="detail-tag"><strong>GNC:</strong> Si corresponde</span>
+          </div>
+          <div class="step-tip">Checklist automático + integración con aseguradoras y municipalidades.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arrow"><div class="arrow-line"></div><div class="arrow-head"></div></div>
+
+    <!-- FINAL -->
+    <div style="max-width: 500px; width: 100%;">
+      <div style="background: linear-gradient(135deg, rgba(34,197,94,0.15), rgba(34,197,94,0.05)); border: 2px solid rgba(34,197,94,0.4); border-radius: 16px; padding: 24px; text-align: center;">
+        <div style="font-size: 2rem; margin-bottom: 8px;">✅</div>
+        <div style="font-size: 1.2rem; font-weight: 800; color: #4ade80;">¡TRANSFERENCIA COMPLETADA!</div>
+        <div style="font-size: 0.85rem; color: #86efac; margin-top: 6px;">El auto está legalmente a nombre del nuevo dueño</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SUMMARY -->
+  <div class="summary">
+    <h2>Resumen del Proceso</h2>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-value" style="color: #38bdf8;">3-5 días</div>
+        <div class="summary-label">Tiempo con gestor</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color: #c084fc;">9 pasos</div>
+        <div class="summary-label">Del proceso completo</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" style="color: #4ade80;">~$700K</div>
+        <div class="summary-label">Costo total aprox. (auto $15M)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #818cf8;"></div>
+      <span>Lo hace el gestor (digitalizable)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #f87171;"></div>
+      <span>Requiere presencia física</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #fbbf24;"></div>
+      <span>Requiere ambas partes</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background: #2dd4bf;"></div>
+      <span>Lo hace el Registro</span>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

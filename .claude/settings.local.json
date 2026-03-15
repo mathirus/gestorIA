@@ -1,0 +1,23 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(ls:*)",
+      "Bash(python3:*)",
+      "WebSearch",
+      "WebFetch(domain:gesthispania.com)",
+      "WebFetch(domain:www.diariodetransporte.com)",
+      "WebFetch(domain:tramiauto.es)",
+      "WebFetch(domain:www.hyland.com)",
+      "WebFetch(domain:www.cbinsights.com)",
+      "Bash(python:*)",
+      "WebFetch(domain:www.argentina.gob.ar)",
+      "WebFetch(domain:lb.agip.gob.ar)",
+      "WebFetch(domain:www.arba.gov.ar)",
+      "WebFetch(domain:consultainfracciones.seguridadvial.gob.ar)",
+      "WebFetch(domain:www2.jus.gob.ar)",
+      "WebFetch(domain:www.dnrpa.gov.ar)",
+      "Bash(git init:*)"
+    ]
+  }
+}
