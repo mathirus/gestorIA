@@ -17,6 +17,12 @@ from db.models import TipoConsulta
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Create tables (SQLite for dev)
+    from db.database import engine
+    from db.models import Base
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
     registrar_scraper(TipoConsulta.costos, CostosScraper())
     registrar_scraper(TipoConsulta.patentes_caba, AgipScraper())
     registrar_scraper(TipoConsulta.patentes_pba, ArbaScraper())

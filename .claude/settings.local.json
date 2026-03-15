@@ -17,7 +17,17 @@
       "WebFetch(domain:consultainfracciones.seguridadvial.gob.ar)",
       "WebFetch(domain:www2.jus.gob.ar)",
       "WebFetch(domain:www.dnrpa.gov.ar)",
-      "Bash(git init:*)"
+      "Bash(git init:*)",
+      "Bash(git:*)",
+      "Bash(cd:*)",
+      "Bash(docker info:*)",
+      "Bash(which npx:*)",
+      "Bash(docker:*)",
+      "Bash(node:*)",
+      "Bash(pip install:*)",
+      "Bash(curl:*)",
+      "Bash(taskkill:*)",
+      "Bash(playwright install:*)"
     ]
   }
 }

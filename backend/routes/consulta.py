@@ -29,7 +29,7 @@ async def crear_consulta(
         tipos.extend([TipoConsulta.patentes_pba, TipoConsulta.vtv_pba])
 
     for tipo in tipos:
-        sub = SubConsulta(consulta_id=consulta.id, tipo=tipo, estado=EstadoConsulta.pendiente)
+        sub = SubConsulta(consulta_id=consulta.id, tipo=tipo.value, estado=EstadoConsulta.pendiente.value)
         db.add(sub)
 
     await db.commit()
@@ -72,7 +72,7 @@ async def reintentar_sub_consulta(
     sub = result.scalar_one_or_none()
     if not sub:
         raise HTTPException(status_code=404)
-    sub.estado = EstadoConsulta.pendiente
+    sub.estado = EstadoConsulta.pendiente.value
     sub.intentos = 0
     sub.error = None
     await db.commit()
@@ -83,10 +83,10 @@ async def reintentar_sub_consulta(
 def _build_response(consulta: Consulta) -> dict:
     subs = consulta.sub_consultas
     todos_terminados = all(
-        s.estado in (EstadoConsulta.completado, EstadoConsulta.fallido, EstadoConsulta.pendiente_24hs)
+        s.estado in (EstadoConsulta.completado.value, EstadoConsulta.fallido.value, EstadoConsulta.pendiente_24hs.value)
         for s in subs
     )
-    tiene_fallos = any(s.estado == EstadoConsulta.fallido for s in subs)
+    tiene_fallos = any(s.estado == EstadoConsulta.fallido.value for s in subs)
 
     if todos_terminados and tiene_fallos:
         estado_general = "con_errores"
@@ -103,8 +103,8 @@ def _build_response(consulta: Consulta) -> dict:
         "estado_general": estado_general,
         "sub_consultas": [
             {
-                "tipo": s.tipo.value,
-                "estado": s.estado.value,
+                "tipo": s.tipo if isinstance(s.tipo, str) else s.tipo.value,
+                "estado": s.estado if isinstance(s.estado, str) else s.estado.value,
                 "intentos": s.intentos,
                 "datos": s.datos,
                 "error": s.error,

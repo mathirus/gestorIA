@@ -9,7 +9,7 @@ class VtvCabaScraper(BaseScraper):
 
     async def _ejecutar(self, patente: str, **kwargs) -> dict:
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
+            browser = await p.chromium.launch(headless=True, channel="chrome")
             page = await browser.new_page()
             try:
                 await page.goto(settings.vtv_caba_url, wait_until="networkidle")

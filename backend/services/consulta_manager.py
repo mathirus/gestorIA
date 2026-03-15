@@ -4,11 +4,11 @@ from sqlalchemy import select
 from db.models import Consulta, SubConsulta, EstadoConsulta, TipoConsulta
 from scrapers.base import BaseScraper, ScraperResult
 
-_scrapers: dict[TipoConsulta, BaseScraper] = {}
+_scrapers: dict[str, BaseScraper] = {}
 
 
 def registrar_scraper(tipo: TipoConsulta, scraper: BaseScraper):
-    _scrapers[tipo] = scraper
+    _scrapers[tipo.value] = scraper
 
 
 async def ejecutar_consulta(consulta_id: int, db_session_factory: async_sessionmaker):
@@ -27,9 +27,10 @@ async def ejecutar_consulta(consulta_id: int, db_session_factory: async_sessionm
 
     tasks = []
     for sub in subs:
-        if sub.tipo in _scrapers:
+        tipo_str = sub.tipo if isinstance(sub.tipo, str) else sub.tipo.value
+        if tipo_str in _scrapers:
             tasks.append(
-                _ejecutar_sub(sub.id, sub.tipo, patente, provincia, db_session_factory)
+                _ejecutar_sub(sub.id, tipo_str, patente, provincia, db_session_factory)
             )
 
     await asyncio.gather(*tasks)
@@ -43,22 +44,23 @@ async def ejecutar_sub_consulta(
             select(Consulta).where(Consulta.id == consulta_id)
         )
         consulta = result.scalar_one()
+        tipo_str = tipo.value if isinstance(tipo, TipoConsulta) else tipo
         result = await db.execute(
             select(SubConsulta).where(
                 SubConsulta.consulta_id == consulta_id,
-                SubConsulta.tipo == tipo,
+                SubConsulta.tipo == tipo_str,
             )
         )
         sub = result.scalar_one()
 
     await _ejecutar_sub(
-        sub.id, tipo, consulta.patente, consulta.provincia, db_session_factory
+        sub.id, tipo_str, consulta.patente, consulta.provincia, db_session_factory
     )
 
 
 async def _ejecutar_sub(
     sub_id: int,
-    tipo: TipoConsulta,
+    tipo: str,
     patente: str,
     provincia: str,
     db_session_factory: async_sessionmaker,
@@ -68,7 +70,7 @@ async def _ejecutar_sub(
     async with db_session_factory() as db:
         result = await db.execute(select(SubConsulta).where(SubConsulta.id == sub_id))
         sub = result.scalar_one()
-        sub.estado = EstadoConsulta.ejecutando
+        sub.estado = EstadoConsulta.ejecutando.value
         await db.commit()
 
     resultado: ScraperResult = await scraper.ejecutar(patente, provincia=provincia)
@@ -78,10 +80,10 @@ async def _ejecutar_sub(
         sub = result.scalar_one()
         sub.intentos = resultado.intentos
         if resultado.exito:
-            sub.estado = EstadoConsulta.completado
+            sub.estado = EstadoConsulta.completado.value
             sub.datos = resultado.datos
             sub.error = None
         else:
-            sub.estado = EstadoConsulta.fallido
+            sub.estado = EstadoConsulta.fallido.value
             sub.error = resultado.error
         await db.commit()

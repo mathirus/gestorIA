@@ -1,6 +1,6 @@
 import enum
 from datetime import datetime
-from sqlalchemy import String, Enum, DateTime, Integer, JSON, ForeignKey, func
+from sqlalchemy import String, DateTime, Integer, JSON, ForeignKey
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -33,7 +33,7 @@ class Consulta(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     patente: Mapped[str] = mapped_column(String(10), index=True)
     provincia: Mapped[str] = mapped_column(String(50))
-    created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     sub_consultas: Mapped[list["SubConsulta"]] = relationship(back_populates="consulta")
 
@@ -43,11 +43,11 @@ class SubConsulta(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     consulta_id: Mapped[int] = mapped_column(ForeignKey("consultas.id"))
-    tipo: Mapped[TipoConsulta] = mapped_column(Enum(TipoConsulta))
-    estado: Mapped[EstadoConsulta] = mapped_column(Enum(EstadoConsulta), default=EstadoConsulta.pendiente)
+    tipo: Mapped[str] = mapped_column(String(30))
+    estado: Mapped[str] = mapped_column(String(20), default=EstadoConsulta.pendiente.value)
     intentos: Mapped[int] = mapped_column(Integer, default=0)
     datos: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     error: Mapped[str | None] = mapped_column(String, nullable=True)
-    updated_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(), onupdate=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     consulta: Mapped["Consulta"] = relationship(back_populates="sub_consultas")

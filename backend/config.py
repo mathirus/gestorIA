@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_url: str = "postgresql+asyncpg://gestoria:gestoria@localhost:5432/gestoria"
+    database_url: str = "sqlite+aiosqlite:///./gestoria.db"
     multabot_api_key: str = ""
 
     scraper_timeout: int = 30
@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     vtv_caba_url: str = "https://www.infovtv.com.ar/ng"
     multabot_url: str = "https://multabot.com.ar/api"
     dnrpa_valuacion_url: str = "https://www.dnrpa.gov.ar/valuacion/cons_valuacion.php"
+
+    chrome_path: str = "C:/Program Files/Google/Chrome/Application/chrome.exe"
 
     class Config:
         env_file = ".env"
