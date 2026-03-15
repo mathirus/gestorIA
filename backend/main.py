@@ -3,6 +3,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from routes.consulta import router as consulta_router
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,6 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+app.include_router(consulta_router)
 
 
 @app.get("/api/health")
