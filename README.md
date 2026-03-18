@@ -1,8 +1,36 @@
 # gestorIA
 
-Plataforma de consultas vehiculares para Argentina. El usuario ingresa una patente y provincia, y el sistema ejecuta en paralelo multiples consultas a organismos publicos (deuda de patentes, multas, VTV, informe de dominio) mostrando los resultados en un checklist en tiempo real.
+## Que es esto
 
-Esto es la primera pieza de un gestor digital automotor con IA. Eventualmente automatizara todo el proceso de transferencia vehicular.
+En Argentina, transferir un auto usado requiere 9 pasos, 3-5 dias habiles, multiples organismos publicos (DNRPA, AFIP, municipios) y un profesional llamado "gestor" que navega todo el tramite. No existe ninguna plataforma digital que integre todo esto.
+
+**gestorIA** es un proyecto para construir esa plataforma. Arrancamos por lo mas basico: una herramienta de consulta vehicular donde pones una patente y obtenes toda la informacion que un gestor necesita antes de arrancar una transferencia.
+
+## Que hace hoy
+
+El usuario ingresa una patente y provincia en una web. El sistema ejecuta en paralelo multiples consultas a organismos publicos y muestra los resultados en un checklist en tiempo real.
+
+### Que funciona end-to-end (podes probarlo ahora)
+- **Calculadora de costos** — calcula arancel DNRPA (1%) + sellos provinciales + verificacion policial
+- **DNRPA placeholder** — devuelve mensaje de que el informe se solicita manualmente
+
+### Que esta construido pero bloqueado por protecciones anti-bot
+- **AGIP (deuda de patentes CABA)** — scraper escrito con selectores reales, bloqueado por reCAPTCHA
+- **VTV PBA (verificacion tecnica)** — formulario identificado, bloqueado por Cloudflare
+- **Multabot (multas)** — no tiene API publica, Cloudflare en el formulario web
+
+### Que no se puede hacer (no existe la consulta publica)
+- **ARBA (patentes PBA)** — no hay formulario publico, requiere autogestion con CUIT
+- **VTV CABA** — no existe consulta de estado online, solo turnos
+
+## Por que "provincia" importa
+
+Los impuestos y consultas dependen de donde esta radicado el auto:
+- **CABA:** patentes las cobra AGIP, VTV la gestiona suvtv.com.ar
+- **Provincia de Buenos Aires:** patentes las cobra ARBA, VTV la gestiona vtv.gba.gob.ar
+- Las multas y el informe de dominio (DNRPA) son nacionales, no dependen de la provincia
+
+Cuando el usuario elige "CABA", se ejecutan AGIP + VTV CABA. Cuando elige "Buenos Aires", se ejecutan ARBA + VTV PBA. Costos, multas y dominio se ejecutan siempre.
 
 ---
 
@@ -42,6 +70,21 @@ npm run dev
 # Corre en http://localhost:3000
 ```
 
+### Variables de entorno
+
+Copiar `backend/.env.example` a `backend/.env`:
+```bash
+cp backend/.env.example backend/.env
+```
+
+Contenido:
+```
+DATABASE_URL=sqlite+aiosqlite:///./gestoria.db    # SQLite para dev, PostgreSQL para prod
+MULTABOT_API_KEY=                                  # Si se consigue acceso API a Multabot
+```
+
+No hace falta configurar nada para desarrollo. SQLite se crea solo y los scrapers usan Chrome del sistema.
+
 ### Tests
 
 ```bash
@@ -50,6 +93,19 @@ python -m pytest tests/ -v
 ```
 
 7 tests: 4 de calculadora de costos + 3 de logica de reintentos del scraper base.
+
+### Ejemplo: que pasa cuando probas la app
+
+1. Abris http://localhost:3000
+2. Pones patente "OZL491", provincia "CABA", click "Consultar"
+3. Te redirige a la pagina de resultados con 5 items en el checklist:
+   - ✅ **Calculadora de costos** — completa al instante con desglose ($545.000 para auto de $15M)
+   - ✅ **Informe de dominio** — completa al instante con mensaje placeholder
+   - ❌ **Deuda patentes CABA** — falla (reCAPTCHA de AGIP)
+   - ❌ **VTV CABA** — falla (no existe consulta publica)
+   - ❌ **Multas** — falla (Multabot sin API key)
+4. Los items fallidos muestran el error y un boton "Reintentar"
+5. La pagina deja de pollear cuando todo termino
 
 ---
 
