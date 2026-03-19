@@ -8,20 +8,25 @@ En Argentina, transferir un auto usado requiere 9 pasos, 3-5 dias habiles, multi
 
 ## Que hace hoy
 
-El usuario ingresa una patente y provincia en una web. El sistema ejecuta en paralelo multiples consultas a organismos publicos y muestra los resultados en un checklist en tiempo real.
+El usuario ingresa una patente y provincia en una web. El sistema ejecuta en paralelo multiples consultas a organismos publicos y muestra los resultados en un checklist en tiempo real. **7 de 9 scrapers funcionan 100% automaticamente** con resolucion de captcha via CapSolver, sin intervencion humana.
 
-### Que funciona end-to-end (podes probarlo ahora)
-- **Calculadora de costos** — calcula arancel DNRPA (1%) + sellos provinciales + verificacion policial
-- **DNRPA placeholder** — devuelve mensaje de que el informe se solicita manualmente
+### Que funciona end-to-end (7 scrapers automaticos)
+- **AGIP (patentes CABA)** — consulta deuda de patentes. CapSolver reCAPTCHA v2 + Playwright headless. Devuelve datos del vehiculo + deudas impagas.
+- **VTV PBA** — verificacion tecnica vehicular Provincia BA. CapSolver Turnstile + httpx API directa (sin browser). Devuelve estado VTV, oblea, planta.
+- **VTV CABA** — verificacion tecnica vehicular CABA. CapSolver reCAPTCHA v2 + httpx API directa (sin browser). Devuelve historial completo de VTV (10 verificaciones).
+- **Calculadora de costos** — calculo local, sin captcha. Devuelve desglose de costos (arancel DNRPA + sellos + verificacion policial).
+- **DNRPA dominio** — informe de radicacion del vehiculo. ddddocr OCR (gratis) + Chrome CDP para popup. Devuelve datos de radicacion (registro, localidad, provincia).
+- **Multas CABA** — infracciones de transito CABA. CapSolver reCAPTCHA Enterprise + Chrome CDP. Devuelve infracciones con numero de acta, montos.
+- **ANSV Nacional** — infracciones nacionales. CapSolver reCAPTCHA v2 + Chrome CDP. Devuelve infracciones nacionales (requiere DNI, no patente).
 
-### Que esta construido pero bloqueado por protecciones anti-bot
-- **AGIP (deuda de patentes CABA)** — scraper escrito con selectores reales, bloqueado por reCAPTCHA
-- **VTV PBA (verificacion tecnica)** — formulario identificado, bloqueado por Cloudflare
-- **Multabot (multas)** — no tiene API publica, Cloudflare en el formulario web
+### Parcialmente funcional
+- **Multas PBA** — el flujo funciona pero el token de captcha Enterprise a veces es rechazado por el servidor.
 
-### Que no se puede hacer (no existe la consulta publica)
-- **ARBA (patentes PBA)** — no hay formulario publico, requiere autogestion con CUIT
-- **VTV CABA** — no existe consulta de estado online, solo turnos
+### Pausado
+- **ARBA (patentes PBA)** — requiere credenciales CUIT + CIT que no tenemos.
+
+### Ya no se necesita
+- **Multabot** — era un servicio intermediario. Ahora scrapeamos las fuentes gubernamentales directamente (CABA, PBA, ANSV).
 
 ## Por que "provincia" importa
 
@@ -37,7 +42,8 @@ Cuando el usuario elige "CABA", se ejecutan AGIP + VTV CABA. Cuando elige "Bueno
 ## Stack
 
 - **Backend:** Python 3.12+ / FastAPI / SQLAlchemy async / SQLite (dev) / PostgreSQL (prod)
-- **Scraping:** Playwright (usa Chrome instalado via `channel="chrome"`)
+- **Scraping:** Playwright + Chrome CDP + httpx (segun el sitio)
+- **Captcha:** CapSolver (reCAPTCHA v2, Enterprise, Turnstile) + ddddocr (OCR gratis para DNRPA)
 - **Frontend:** Next.js 16 / TypeScript / Tailwind CSS
 - **Tests:** pytest + pytest-asyncio
 
@@ -48,16 +54,18 @@ Cuando el usuario elige "CABA", se ejecutan AGIP + VTV CABA. Cuando elige "Bueno
 ### Requisitos
 - Python 3.12+
 - Node.js 18+
-- Google Chrome instalado (Playwright lo usa para scraping)
+- Google Chrome instalado (los scrapers lo usan via CDP y Playwright)
 
 ### Backend
 
 ```bash
 cd backend
 pip install -r requirements.txt
-python -m uvicorn main:app --reload
+python run.py
 # Corre en http://localhost:8000
 ```
+
+**Importante:** En Windows usar `python run.py` y NO `uvicorn main:app` directo. El wrapper configura ProactorEventLoop que es necesario para las operaciones async con subprocesos.
 
 Al iniciar, crea automaticamente la base de datos SQLite (`gestoria.db`) y las tablas.
 
@@ -80,10 +88,10 @@ cp backend/.env.example backend/.env
 Contenido:
 ```
 DATABASE_URL=sqlite+aiosqlite:///./gestoria.db    # SQLite para dev, PostgreSQL para prod
-MULTABOT_API_KEY=                                  # Si se consigue acceso API a Multabot
+capsolver_api_key=CAP-XXXXXXXX                    # API key de CapSolver (necesario para captchas)
 ```
 
-No hace falta configurar nada para desarrollo. SQLite se crea solo y los scrapers usan Chrome del sistema.
+La API key de CapSolver es necesaria para que funcionen los scrapers con captcha (AGIP, VTV PBA, VTV CABA, Multas CABA, Multas PBA, ANSV).
 
 ### Tests
 
@@ -98,13 +106,13 @@ python -m pytest tests/ -v
 
 1. Abris http://localhost:3000
 2. Pones patente "OZL491", provincia "CABA", click "Consultar"
-3. Te redirige a la pagina de resultados con 5 items en el checklist:
-   - ✅ **Calculadora de costos** — completa al instante con desglose ($545.000 para auto de $15M)
-   - ✅ **Informe de dominio** — completa al instante con mensaje placeholder
-   - ❌ **Deuda patentes CABA** — falla (reCAPTCHA de AGIP)
-   - ❌ **VTV CABA** — falla (no existe consulta publica)
-   - ❌ **Multas** — falla (Multabot sin API key)
-4. Los items fallidos muestran el error y un boton "Reintentar"
+3. Te redirige a la pagina de resultados con items en el checklist:
+   - ✅ **Calculadora de costos** — completa al instante con desglose
+   - ✅ **AGIP deuda patentes** — consulta automatica con captcha resuelto por CapSolver
+   - ✅ **VTV CABA** — historial completo de verificaciones
+   - ✅ **DNRPA dominio** — datos de radicacion del vehiculo
+   - ✅ **Multas CABA** — infracciones con actas y montos
+4. Los items se van completando a medida que cada scraper termina
 5. La pagina deja de pollear cuando todo termino
 
 ---
@@ -151,14 +159,15 @@ Provincias soportadas: `caba`, `buenos_aires`. Segun la provincia, se ejecutan l
 gestorIA/
 ├── backend/
 │   ├── main.py                    # FastAPI app, lifespan, CORS, registro de scrapers
-│   ├── config.py                  # Settings (URLs de sitios, timeouts, DB)
+│   ├── config.py                  # Settings (URLs, timeouts, DB, capsolver_api_key)
+│   ├── run.py                     # Windows wrapper para uvicorn (ProactorEventLoop)
 │   ├── requirements.txt           # Dependencias Python
 │   ├── .env.example               # Template de variables de entorno
 │   ├── gestoria.db                # SQLite (se crea automaticamente)
 │   │
 │   ├── db/
 │   │   ├── database.py            # Engine async + session factory + get_db dependency
-│   │   ├── models.py              # ORM: Consulta, SubConsulta, enums de estado/tipo
+│   │   ├── models.py              # ORM: Consulta, SubConsulta, enums (TipoConsulta incluye multas_caba/pba/nacional)
 │   │   └── migrations/            # Alembic (para PostgreSQL en prod)
 │   │
 │   ├── models/
@@ -170,17 +179,20 @@ gestorIA/
 │   ├── services/
 │   │   ├── calculadora.py         # calcular_costos(valuacion, provincia) → dict con desglose
 │   │   ├── alicuotas.py           # Tasas de sellos por provincia + arancel DNRPA
-│   │   └── consulta_manager.py    # Orquestador: lanza scrapers en paralelo, actualiza DB
+│   │   ├── consulta_manager.py    # Orquestador: lanza scrapers en paralelo, actualiza DB
+│   │   └── capsolver_client.py    # Cliente async para CapSolver API (reCAPTCHA, Turnstile, Enterprise)
 │   │
 │   ├── scrapers/
 │   │   ├── base.py                # BaseScraper ABC con reintentos/timeout/backoff
 │   │   ├── costos.py              # CostosScraper: wrapper de calculadora como scraper
-│   │   ├── agip.py                # AGIP CABA: deuda de patentes (Playwright)
-│   │   ├── arba.py                # ARBA PBA: deuda de patentes (Playwright) [skeleton]
-│   │   ├── vtv_pba.py             # VTV Provincia BA (Playwright) [skeleton]
-│   │   ├── vtv_caba.py            # VTV CABA (Playwright) [skeleton]
-│   │   ├── multabot.py            # Multabot: multas de transito (httpx) [skeleton]
-│   │   └── dnrpa_dominio.py       # DNRPA informe de dominio [placeholder]
+│   │   ├── agip.py                # AGIP CABA: deuda de patentes (CapSolver reCAPTCHA v2 + Playwright)
+│   │   ├── arba.py                # ARBA PBA: deuda de patentes [pausado - requiere CUIT+CIT]
+│   │   ├── vtv_pba.py             # VTV Provincia BA (CapSolver Turnstile + httpx API directa)
+│   │   ├── vtv_caba.py            # VTV CABA (CapSolver reCAPTCHA v2 + httpx API directa)
+│   │   ├── dnrpa_dominio.py       # DNRPA informe de dominio (ddddocr OCR + Chrome CDP)
+│   │   ├── multas_caba.py         # Multas CABA (CapSolver reCAPTCHA Enterprise + Chrome CDP)
+│   │   ├── multas_pba.py          # Multas PBA (Enterprise captcha - parcial)
+│   │   └── multas_nacional.py     # ANSV infracciones nacionales (CapSolver reCAPTCHA v2 + Chrome CDP)
 │   │
 │   └── tests/
 │       ├── test_calculadora.py    # 4 tests: CABA, PBA, default, desglose completo
@@ -212,7 +224,7 @@ gestorIA/
 
 ---
 
-## Los 7 scrapers — Estado detallado
+## Los 9 scrapers — Estado detallado
 
 ### 1. Calculadora de costos — ✅ FUNCIONA
 
@@ -238,159 +250,140 @@ gestorIA/
 
 ---
 
-### 2. AGIP — Deuda de patentes CABA — ⚠️ PARCIAL
+### 2. AGIP — Deuda de patentes CABA — ✅ FUNCIONA
 
 **Archivo:** `backend/scrapers/agip.py`
 **URL:** https://lb.agip.gob.ar/ConsultaPat/
 **Que hace:** Consulta si un vehiculo radicado en CABA tiene deuda de patentes.
 **Input:** Patente (ej: OZL491).
+**Captcha:** CapSolver reCAPTCHA v2 + Playwright headless con channel="chrome".
+**Output:** Datos del vehiculo + deudas impagas.
 
-**Estado actual:**
-- Scraper escrito con selectores reales verificados: `#fldDominio`, `#fldDominio2`, `#btnConsultar`
-- Se conecta al sitio y puede interactuar con el formulario
-- **PROBLEMA:** El sitio tiene Google reCAPTCHA. Sin resolver el captcha, no se puede hacer la consulta.
-
-**Hallazgos de la investigacion:**
-- El formulario tiene DOS campos de dominio (campo + confirmacion) — hay que poner la patente en ambos
-- Tiene un checkbox `#chkDigitoVerificador` — si lo marcas, aparece campo para digito verificador; si no, pide que lo marques
-- Se encontro API JSON interna: `POST /Empadronados/json/captcha/GetDatos` (necesita token captcha) y `POST /Empadronados/json/nocaptcha/GetDatos` (necesita sesion/key)
-
-**Opciones para resolver:**
-1. **Servicio 2captcha / anti-captcha** (~$2-3 por 1000 resoluciones) — el servicio resuelve el reCAPTCHA y devuelve el token
-2. **Semi-manual** — el usuario resuelve el captcha en el frontend, el backend usa el token para la consulta
-3. **Investigar la ruta nocaptcha** — puede funcionar con cookies de sesion del navegador
+**Estado:** Funciona 100% automaticamente. Testeado end-to-end en servidor.
 
 ---
 
-### 3. ARBA — Deuda de patentes Provincia BA — ❌ BLOQUEADO
-
-**Archivo:** `backend/scrapers/arba.py`
-**URL:** https://web.arba.gov.ar/consulta-de-deuda-automotor
-**Que hace:** Consultaria si un vehiculo radicado en Provincia de Buenos Aires tiene deuda de patentes.
-
-**Estado actual:** Skeleton con selectores genericos. No funciona.
-
-**Problema:** La pagina de ARBA (`web.arba.gov.ar/consulta-de-deuda-automotor`) NO tiene un formulario de consulta. Es solo texto informativo con instrucciones para usar el sistema "Host" interno de ARBA. Los portales de autogestion (`arba.gov.ar/Autogestion`, `app.arba.gov.ar`) devuelven errores HTTP o no cargan.
-
-**Opciones:**
-1. Investigar si ARBA tiene otro portal funcional de consulta de deuda automotor
-2. La consulta puede requerir CUIT + clave fiscal (lo cual la hace inviable para scraping anonimo)
-3. Buscar fuentes alternativas de informacion de patentes PBA
-
----
-
-### 4. VTV Provincia BA — ⚠️ PARCIAL
+### 3. VTV Provincia BA — ✅ FUNCIONA
 
 **Archivo:** `backend/scrapers/vtv_pba.py`
-**URL correcta:** https://vtv.gba.gob.ar/consultar-vtv
+**URL:** https://vtv.gba.gob.ar/consultar-vtv
 **Que hace:** Consulta si un vehiculo tiene la VTV vigente en Provincia de Buenos Aires.
+**Input:** Patente.
+**Captcha:** CapSolver Turnstile + httpx API directa (sin browser, muy rapido).
+**Output:** Estado VTV, oblea, planta.
 
-**Estado actual:** Skeleton con selectores genericos. La URL en config.py esta correcta.
-
-**Hallazgos:**
-- El formulario existe: input `#nroObleaPatente` (patente o numero de oblea) + boton `button.consultarVTV__btn`
-- **Sin captcha visible**
-- **PROBLEMA:** Cloudflare challenge intercepta el submit. El scraper puede llenar el formulario pero al hacer click en "Consultar", Cloudflare bloquea la request real al backend.
-- API descubierta: `https://vtv-web-api.transporte.gba.gob.ar/api/` — pero no expone endpoints de consulta publica directamente.
-
-**Opciones:**
-1. Usar stealth plugins de Playwright (`playwright-stealth`) para evadir Cloudflare
-2. Usar un servicio de bypass de Cloudflare (mas complejo y costoso)
-3. Consultar si la API tiene endpoints accesibles con auth
+**Estado:** Funciona 100% automaticamente. No necesita browser, usa la API directamente.
 
 ---
 
-### 5. VTV CABA — ❌ NO EXISTE
+### 4. VTV CABA — ✅ FUNCIONA
 
 **Archivo:** `backend/scrapers/vtv_caba.py`
-**URL investigada:** https://www.infovtv.com.ar/ng (404), https://www.suvtv.com.ar/turnos/ (solo turnos)
-**Que hace:** Consultaria si un vehiculo tiene la VTV vigente en CABA.
+**URL:** suvtv.com.ar
+**Que hace:** Consulta historial de VTV para vehiculos en CABA.
+**Input:** Patente.
+**Captcha:** CapSolver reCAPTCHA v2 + httpx API directa (sin browser).
+**Output:** Historial completo de VTV (hasta 10 verificaciones).
 
-**Estado:** No existe un portal publico de consulta de estado de VTV para CABA. El sitio suvtv.com.ar es solo para sacar turnos para la verificacion, no para consultar si esta vigente. infovtv.com.ar es informativo sobre VTV de Provincia, no CABA.
-
-**Opciones:**
-1. Descartar este scraper por ahora
-2. Investigar si la app miBA o el sitio de Buenos Aires Ciudad tiene alguna consulta que no encontramos
-
----
-
-### 6. Multabot — Multas de transito — ⚠️ PARCIAL
-
-**Archivo:** `backend/scrapers/multabot.py`
-**URL:** https://multabot.com.ar
-**Que hace:** Consulta multas de transito en 150+ jurisdicciones de Argentina.
-
-**Estado actual:** Cliente httpx apuntando a una API que no existe.
-
-**Hallazgos:**
-- Multabot **NO tiene API REST publica**. Todas las rutas `/api/...` devuelven 404 o la pagina HTML.
-- SI tiene un formulario web: input `#hero-query` + boton "Consultar" — **sin captcha**
-- Al hacer submit, redirige a `/pedir-informe?domain=OZL491` que pide un **email** para enviar el reporte
-- Tiene proteccion **Cloudflare challenge**
-- En su FAQ mencionan "API de Integracion" para empresas — hay que contactarlos
-
-**Alternativas para multas:**
-- **CABA:** https://buenosaires.gob.ar/licenciasdeconducir/consulta-de-infracciones/ (pide DNI o patente)
-- **Provincia BA:** https://infraccionesba.gba.gob.ar/consulta-infraccion (pide DNI o patente)
-- **Nacional (ANSV):** https://consultainfracciones.seguridadvial.gob.ar/ (pide DNI + patente + captcha)
-
-**Opciones:**
-1. Contactar a Multabot para acceso API comercial
-2. Scrapear las fuentes oficiales directamente (CABA, PBA) en vez de Multabot
-3. Scrapear el formulario web de Multabot (requiere resolver Cloudflare)
+**Estado:** Funciona 100% automaticamente. No necesita browser, usa la API directamente.
 
 ---
 
-### 7. DNRPA — Informe de dominio — ✅ PLACEHOLDER
+### 5. DNRPA — Informe de dominio — ✅ FUNCIONA
 
 **Archivo:** `backend/scrapers/dnrpa_dominio.py`
-**URL:** https://www.dnrpa.gov.ar/portal_dnrpa/guia_tramites/informe_dominio.htm
-**Que hace:** Informaria si el vehiculo tiene embargos, prendas, robo, inhibiciones del titular.
+**Que hace:** Consulta datos de radicacion del vehiculo (registro, localidad, provincia).
+**Input:** Patente.
+**Captcha:** ddddocr OCR (gratis, sin costo de CapSolver) + Chrome CDP para manejar popup.
+**Output:** Datos de radicacion (registro, localidad, provincia).
 
-**Estado actual:** Devuelve un mensaje placeholder:
-```json
-{
-  "fuente": "dnrpa",
-  "patente": "OZL491",
-  "estado": "pendiente_manual",
-  "nota": "El informe de dominio debe solicitarse manualmente. Tarda ~24hs y cuesta ~$1500 ARS."
-}
-```
+**Estado:** Funciona 100% automaticamente.
 
-**Como funciona el informe real:** Se pide online en el portal DNRPA, se paga ~$1500 ARS, y llega por email en ~24 horas. No hay API publica. Existen revendedores (dnrpa.digital, informes.app) que automatizaron el proceso.
+---
 
-**Opciones:**
-1. Automatizar la solicitud via Playwright en el portal DNRPA
-2. Integrar con un revendedor que tenga API
-3. Dejarlo semi-manual: el sistema registra que se necesita, el gestor lo solicita por fuera
+### 6. Multas CABA — ✅ FUNCIONA
+
+**Archivo:** `backend/scrapers/multas_caba.py`
+**URL:** https://buenosaires.gob.ar/licenciasdeconducir/consulta-de-infracciones/
+**Que hace:** Consulta infracciones de transito en CABA.
+**Input:** Patente.
+**Captcha:** CapSolver reCAPTCHA Enterprise + Chrome CDP.
+**Output:** Lista de infracciones con numero de acta y montos.
+
+**Estado:** Funciona 100% automaticamente. Testeado end-to-end en servidor.
+
+---
+
+### 7. ANSV Nacional — ✅ FUNCIONA
+
+**Archivo:** `backend/scrapers/multas_nacional.py`
+**URL:** https://consultainfracciones.seguridadvial.gob.ar/
+**Que hace:** Consulta infracciones de transito a nivel nacional (ANSV).
+**Input:** DNI (no patente).
+**Captcha:** CapSolver reCAPTCHA v2 + Chrome CDP.
+**Output:** Lista de infracciones nacionales.
+
+**Estado:** Funciona 100% automaticamente. Nota: requiere DNI del titular, no patente.
+
+---
+
+### 8. Multas PBA — ⚠️ PARCIAL
+
+**Archivo:** `backend/scrapers/multas_pba.py`
+**URL:** https://infraccionesba.gba.gob.ar/consulta-infraccion
+**Que hace:** Consulta infracciones de transito en Provincia de Buenos Aires.
+**Input:** Patente o DNI.
+**Captcha:** reCAPTCHA Enterprise.
+
+**Estado:** El flujo completo funciona pero el token de captcha Enterprise es a veces rechazado por el servidor. Se necesita investigar por que el token no siempre es aceptado.
+
+---
+
+### 9. ARBA — Deuda de patentes Provincia BA — ⏸️ PAUSADO
+
+**Archivo:** `backend/scrapers/arba.py`
+**Que hace:** Consultaria si un vehiculo radicado en Provincia de Buenos Aires tiene deuda de patentes.
+
+**Estado:** Pausado. La consulta de deuda de patentes en ARBA requiere credenciales CUIT + CIT (clave de identificacion tributaria). No hay formulario de consulta anonima.
 
 ---
 
 ## Que hay que hacer — Proximos pasos
 
-### Prioridad alta (desbloquean funcionalidad)
+### Prioridad alta
 
-1. **Resolver captcha de AGIP** — Es el quick win mas grande. Tiene API JSON limpia, solo falta resolver el reCAPTCHA. Opciones: servicio 2captcha ($2/1000) o modo semi-manual.
+1. **Estabilizar Multas PBA** — Investigar por que el token Enterprise es rechazado intermitentemente.
 
-2. **Scrapear multas CABA y PBA directo** — En vez de depender de Multabot, scrapear las fuentes oficiales: `buenosaires.gob.ar` para CABA y `infraccionesba.gba.gob.ar` para PBA. Hay que inspeccionar esos sitios (captcha, selectores, etc).
+2. **Valuaciones DNRPA** — Integrar las tablas de valuacion fiscal para que la calculadora obtenga el valor automaticamente por marca/modelo/ano en vez de usar $15M fijo. URL: `dnrpa.gov.ar/valuacion/cons_valuacion.php`
 
-3. **VTV PBA: resolver Cloudflare** — El formulario existe y funciona, solo Cloudflare bloquea. Probar `playwright-stealth` o investigar la API `vtv-web-api.transporte.gba.gob.ar`.
+3. **Infraestructura de deploy** — Preparar el sistema para produccion (Docker, PostgreSQL, monitoreo).
 
 ### Prioridad media
 
-4. **Valuaciones DNRPA** — Integrar las tablas de valuacion fiscal para que la calculadora obtenga el valor automaticamente por marca/modelo/ano en vez de usar $15M fijo. URL: `dnrpa.gov.ar/valuacion/cons_valuacion.php`
+4. **ARBA** — Conseguir credenciales CUIT+CIT o investigar portales alternativos para consulta de patentes PBA.
 
-5. **ARBA** — Investigar portales alternativos o si la consulta requiere autenticacion con CUIT.
+5. **Mas provincias** — Agregar scrapers para Cordoba, Santa Fe, Mendoza, etc.
 
-6. **DNRPA dominio** — Implementar la solicitud real (pago + asincrona).
+6. **UI/UX improvements** — Mejorar la presentacion de resultados, agregar detalles de cada infraccion, exportar reporte.
 
 ### Prioridad baja
 
-7. **VTV CABA** — Descartar o buscar fuente alternativa. No hay consulta publica.
+7. **Integracion con IA** — Interpretar resultados, recomendar si comprar o no, detectar riesgos automaticamente.
 
-8. **Mas provincias** — Agregar scrapers para Cordoba, Santa Fe, Mendoza, etc.
+8. **B2B API** — Exponer los scrapers como API para integracion con sistemas de agencias y concesionarias.
 
-9. **Integracion con IA** — Interpretar resultados, recomendar si comprar o no, detectar riesgos automaticamente.
+---
+
+## Dependencias clave
+
+### Python (backend/requirements.txt)
+- `fastapi`, `uvicorn` — Web framework
+- `sqlalchemy[asyncio]`, `aiosqlite` — Database async
+- `playwright` — Browser automation (AGIP)
+- `httpx` — HTTP client async (VTV PBA, VTV CABA)
+- `aiohttp>=3.9.0` — CapSolver API client
+- `ddddocr>=1.6.0` — OCR para captcha de imagen DNRPA (gratis)
+- `pydantic-settings` — Configuration
 
 ---
 
@@ -418,17 +411,31 @@ Frontend (Next.js :3000)
 Backend (FastAPI :8000)
     ├── routes/consulta.py          → endpoints REST
     ├── services/consulta_manager.py → orquesta scrapers en paralelo
+    ├── services/capsolver_client.py → resolucion automatica de captchas
     ├── scrapers/                    → un modulo por fuente de datos
     │   ├── base.py                  → clase abstracta con reintentos
-    │   ├── agip.py                  → Playwright + Chrome
-    │   ├── arba.py                  → Playwright + Chrome
-    │   ├── vtv_pba.py               → Playwright + Chrome
-    │   ├── multabot.py              → httpx (API/scraping)
-    │   └── ...
-    └── db/ (SQLite)
+    │   ├── agip.py                  → CapSolver reCAPTCHA v2 + Playwright headless
+    │   ├── vtv_pba.py               → CapSolver Turnstile + httpx API directa
+    │   ├── vtv_caba.py              → CapSolver reCAPTCHA v2 + httpx API directa
+    │   ├── dnrpa_dominio.py         → ddddocr OCR + Chrome CDP
+    │   ├── multas_caba.py           → CapSolver reCAPTCHA Enterprise + Chrome CDP
+    │   ├── multas_pba.py            → reCAPTCHA Enterprise + Chrome CDP (parcial)
+    │   ├── multas_nacional.py       → CapSolver reCAPTCHA v2 + Chrome CDP
+    │   ├── costos.py                → calculo local (sin browser)
+    │   └── arba.py                  → pausado (requiere CUIT+CIT)
+    └── db/ (SQLite dev / PostgreSQL prod)
         ├── consultas                → patente, provincia, timestamp
         └── sub_consultas            → tipo, estado, intentos, datos, error
 ```
+
+### Estrategias de scraping
+
+| Estrategia | Cuando se usa | Scrapers |
+|------------|---------------|----------|
+| **httpx API directa** | Cuando se descubrio el endpoint de API del sitio | VTV PBA, VTV CABA |
+| **Playwright headless** | Sitios sin deteccion fuerte de bots | AGIP |
+| **Chrome CDP** | Sitios con Cloudflare/deteccion de headless | DNRPA, Multas CABA, Multas PBA, ANSV |
+| **Calculo local** | No requiere scraping | Costos |
 
 ### Como agregar un nuevo scraper
 

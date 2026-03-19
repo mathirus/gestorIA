@@ -24,6 +24,9 @@ class TipoConsulta(str, enum.Enum):
     vtv_pba = "vtv_pba"
     vtv_caba = "vtv_caba"
     multas = "multas"
+    multas_caba = "multas_caba"
+    multas_pba = "multas_pba"
+    multas_nacional = "multas_nacional"
     dominio = "dominio"
 
 

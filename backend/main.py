@@ -1,4 +1,10 @@
+import asyncio
+import sys
 from contextlib import asynccontextmanager
+
+# Windows needs ProactorEventLoop for subprocess support in async Playwright
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +17,9 @@ from scrapers.vtv_pba import VtvPbaScraper
 from scrapers.vtv_caba import VtvCabaScraper
 from scrapers.multabot import MultabotScraper
 from scrapers.dnrpa_dominio import DnrpaDominioScraper
+from scrapers.multas_caba import MultasCabaScraper
+from scrapers.multas_pba import MultasPbaScraper
+from scrapers.multas_nacional import MultasNacionalScraper
 from services.consulta_manager import registrar_scraper
 from db.models import TipoConsulta
 
@@ -29,6 +38,9 @@ async def lifespan(app: FastAPI):
     registrar_scraper(TipoConsulta.vtv_pba, VtvPbaScraper())
     registrar_scraper(TipoConsulta.vtv_caba, VtvCabaScraper())
     registrar_scraper(TipoConsulta.multas, MultabotScraper())
+    registrar_scraper(TipoConsulta.multas_caba, MultasCabaScraper())
+    registrar_scraper(TipoConsulta.multas_pba, MultasPbaScraper())
+    registrar_scraper(TipoConsulta.multas_nacional, MultasNacionalScraper())
     registrar_scraper(TipoConsulta.dominio, DnrpaDominioScraper())
     yield
 

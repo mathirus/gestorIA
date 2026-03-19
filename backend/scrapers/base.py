@@ -1,6 +1,10 @@
 import asyncio
+import logging
+import traceback
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -19,6 +23,7 @@ class BaseScraper(ABC):
         self.timeout = timeout
 
     async def ejecutar(self, patente: str, **kwargs) -> ScraperResult:
+        last_error = ""
         for intento in range(1, self.max_retries + 1):
             try:
                 datos = await asyncio.wait_for(
@@ -27,10 +32,13 @@ class BaseScraper(ABC):
                 )
                 return ScraperResult(exito=True, datos=datos, intentos=intento)
             except Exception as e:
+                last_error = f"{type(e).__name__}: {str(e)}" or repr(e)
+                logger.error(f"[{self.name}] intento {intento}/{self.max_retries} fallo: {last_error}")
+                logger.debug(traceback.format_exc())
                 if intento < self.max_retries:
-                    await asyncio.sleep(self.backoff[intento - 1])
-                else:
-                    return ScraperResult(exito=False, error=str(e), intentos=intento)
+                    delay = self.backoff[intento - 1] if intento - 1 < len(self.backoff) else 5
+                    await asyncio.sleep(delay)
+        return ScraperResult(exito=False, error=last_error, intentos=self.max_retries)
 
     @abstractmethod
     async def _ejecutar(self, patente: str, **kwargs) -> dict:

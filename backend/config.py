@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 class Settings(BaseSettings):
     database_url: str = "sqlite+aiosqlite:///./gestoria.db"
     multabot_api_key: str = ""
+    capsolver_api_key: str = "CAP-143B25C18A25C6578EF6797BA559258E75A236820B3C65623A93E2E68E87DC0A"
 
     scraper_timeout: int = 30
     scraper_max_retries: int = 3

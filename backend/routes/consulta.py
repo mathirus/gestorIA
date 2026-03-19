@@ -22,11 +22,11 @@ async def crear_consulta(
     db.add(consulta)
     await db.flush()
 
-    tipos = [TipoConsulta.costos, TipoConsulta.multas, TipoConsulta.dominio]
+    tipos = [TipoConsulta.costos, TipoConsulta.multas, TipoConsulta.multas_nacional, TipoConsulta.dominio]
     if data.provincia == "caba":
-        tipos.extend([TipoConsulta.patentes_caba, TipoConsulta.vtv_caba])
+        tipos.extend([TipoConsulta.patentes_caba, TipoConsulta.vtv_caba, TipoConsulta.multas_caba])
     elif data.provincia == "buenos_aires":
-        tipos.extend([TipoConsulta.patentes_pba, TipoConsulta.vtv_pba])
+        tipos.extend([TipoConsulta.patentes_pba, TipoConsulta.vtv_pba, TipoConsulta.multas_pba])
 
     for tipo in tipos:
         sub = SubConsulta(consulta_id=consulta.id, tipo=tipo.value, estado=EstadoConsulta.pendiente.value)
