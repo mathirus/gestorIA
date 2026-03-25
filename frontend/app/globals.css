@@ -24,3 +24,13 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@media print {
+  body { background: white !important; color: black !important; }
+  nav, button, a[href="/"], .no-print { display: none !important; }
+  .bg-gray-900, .bg-gray-950 { background: white !important; border-color: #ddd !important; }
+  .text-white, .text-gray-300, .text-gray-400 { color: black !important; }
+  .text-green-400 { color: green !important; }
+  .text-red-400 { color: red !important; }
+  .text-yellow-400 { color: #b45309 !important; }
+}

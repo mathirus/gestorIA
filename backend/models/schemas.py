@@ -5,6 +5,7 @@ from datetime import datetime
 class ConsultaCreate(BaseModel):
     patente: str
     provincia: str  # "caba" | "buenos_aires"
+    dni: str | None = None
 
 
 class SubConsultaResponse(BaseModel):

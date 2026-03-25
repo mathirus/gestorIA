@@ -155,10 +155,17 @@ class AgipScraper(BaseScraper):
                             if isinstance(item, dict):
                                 imp_actual = float(item.get("importeActualizado", 0) or 0)
                                 total_deuda += imp_actual
+                                # fecha_vencimiento puede ser objeto {year,month,day} o string
+                                fv = item.get("fechaVencimiento", "")
+                                if isinstance(fv, dict):
+                                    d = fv.get("day", "")
+                                    m = fv.get("month", "")
+                                    y = fv.get("year", "")
+                                    fv = f"{d}/{m}/{y}" if d and m and y else str(fv)
                                 deudas.append({
                                     "anio": item.get("anio", ""),
                                     "cuota": item.get("cuota", ""),
-                                    "fecha_vencimiento": item.get("fechaVencimiento", ""),
+                                    "fecha_vencimiento": fv,
                                     "importe_original": item.get("importeOriginal", 0),
                                     "importe_actualizado": imp_actual,
                                 })

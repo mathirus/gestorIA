@@ -18,7 +18,7 @@ async def crear_consulta(
 ):
     patente = data.patente.upper().replace("-", "").replace(" ", "")
 
-    consulta = Consulta(patente=patente, provincia=data.provincia)
+    consulta = Consulta(patente=patente, provincia=data.provincia, dni=data.dni)
     db.add(consulta)
     await db.flush()
 
@@ -78,6 +78,18 @@ async def reintentar_sub_consulta(
     await db.commit()
     background_tasks.add_task(ejecutar_sub_consulta, consulta_id, tipo, async_session)
     return {"status": "reintentando"}
+
+
+@router.get("/consultas")
+async def listar_consultas(db: AsyncSession = Depends(get_db)):
+    result = await db.execute(
+        select(Consulta)
+        .options(selectinload(Consulta.sub_consultas))
+        .order_by(Consulta.created_at.desc())
+        .limit(50)
+    )
+    consultas = result.scalars().all()
+    return [_build_response(c) for c in consultas]
 
 
 def _build_response(consulta: Consulta) -> dict:

@@ -18,32 +18,36 @@ class VtvCabaScraper(BaseScraper):
     async def _ejecutar(self, patente: str, **kwargs) -> dict:
         pat = patente.upper().replace("-", "").replace(" ", "")
 
-        # First, get the reCAPTCHA sitekey from the page
+        # Get sitekey - try from page, fallback to known key
+        KNOWN_SITEKEY = "6LdKVRATAAAAANKz_mugRJbHgwThU9dQbIVfr-dA"
         sitekey = None
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, channel="chrome")
-            page = await browser.new_page()
-            try:
-                await page.goto(VTV_CABA_URL, timeout=20000)
-                await page.wait_for_load_state("networkidle")
-
-                sitekey = await page.evaluate("""() => {
-                    const el = document.querySelector('[data-sitekey]');
-                    if (el) return el.getAttribute('data-sitekey');
-                    const gre = document.querySelector('.g-recaptcha');
-                    if (gre) return gre.getAttribute('data-sitekey');
-                    const iframe = document.querySelector('iframe[src*="recaptcha"]');
-                    if (iframe) {
-                        const match = iframe.src.match(/[?&]k=([^&]+)/);
-                        if (match) return match[1];
-                    }
-                    return null;
-                }""")
-            finally:
-                await browser.close()
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True, channel="chrome")
+                page = await browser.new_page()
+                try:
+                    await page.goto(VTV_CABA_URL, timeout=15000)
+                    await page.wait_for_load_state("networkidle")
+                    sitekey = await page.evaluate("""() => {
+                        const el = document.querySelector('[data-sitekey]');
+                        if (el) return el.getAttribute('data-sitekey');
+                        const gre = document.querySelector('.g-recaptcha');
+                        if (gre) return gre.getAttribute('data-sitekey');
+                        const iframe = document.querySelector('iframe[src*="recaptcha"]');
+                        if (iframe) {
+                            const match = iframe.src.match(/[?&]k=([^&]+)/);
+                            if (match) return match[1];
+                        }
+                        return null;
+                    }""")
+                finally:
+                    await browser.close()
+        except Exception:
+            pass
 
         if not sitekey:
-            raise RuntimeError("No se pudo obtener el sitekey de reCAPTCHA de VTV CABA")
+            sitekey = KNOWN_SITEKEY
+            logger.info(f"VTV CABA: usando sitekey conocido como fallback")
 
         logger.info(f"VTV CABA: sitekey={sitekey}, solving reCAPTCHA")
 

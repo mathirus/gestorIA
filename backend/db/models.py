@@ -36,6 +36,7 @@ class Consulta(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     patente: Mapped[str] = mapped_column(String(10), index=True)
     provincia: Mapped[str] = mapped_column(String(50))
+    dni: Mapped[str | None] = mapped_column(String(20), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     sub_consultas: Mapped[list["SubConsulta"]] = relationship(back_populates="consulta")
