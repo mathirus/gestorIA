@@ -1,4 +1,3 @@
-import asyncio
 import logging
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from sqlalchemy import select
@@ -8,9 +7,6 @@ from scrapers.base import BaseScraper, ScraperResult
 logger = logging.getLogger(__name__)
 
 _scrapers: dict[str, BaseScraper] = {}
-
-# Scrapers que usan Chrome CDP — deben correr en secuencia para no pisarse
-CDP_SCRAPERS = {"multas_caba", "multas_pba", "multas_nacional", "dominio"}
 
 
 def registrar_scraper(tipo: TipoConsulta, scraper: BaseScraper):
@@ -32,31 +28,18 @@ async def ejecutar_consulta(consulta_id: int, db_session_factory: async_sessionm
         )
         subs = result.scalars().all()
 
-    # Separar en dos grupos: rápidos (sin Chrome) y CDP (con Chrome)
-    parallel_tasks = []
-    cdp_subs = []
-
+    # Ejecutar todos los scrapers en secuencia (uno a la vez)
+    # Reduce RAM: solo un Chrome/browser activo a la vez (~500MB vs ~2GB)
+    all_subs = []
     for sub in subs:
         tipo_str = sub.tipo if isinstance(sub.tipo, str) else sub.tipo.value
         if tipo_str not in _scrapers:
             continue
-        if tipo_str in CDP_SCRAPERS:
-            cdp_subs.append((sub.id, tipo_str))
-        else:
-            parallel_tasks.append(
-                _ejecutar_sub(sub.id, tipo_str, patente, provincia, dni, db_session_factory)
-            )
+        all_subs.append((sub.id, tipo_str))
 
-    # 1. Correr scrapers rápidos en paralelo
-    if parallel_tasks:
-        logger.info(f"Consulta #{consulta_id}: lanzando {len(parallel_tasks)} scrapers en paralelo")
-        await asyncio.gather(*parallel_tasks)
-
-    # 2. Correr scrapers CDP en secuencia (uno a la vez)
-    if cdp_subs:
-        logger.info(f"Consulta #{consulta_id}: ejecutando {len(cdp_subs)} scrapers CDP en secuencia")
-        for sub_id, tipo_str in cdp_subs:
-            await _ejecutar_sub(sub_id, tipo_str, patente, provincia, dni, db_session_factory)
+    logger.info(f"Consulta #{consulta_id}: ejecutando {len(all_subs)} scrapers en secuencia")
+    for sub_id, tipo_str in all_subs:
+        await _ejecutar_sub(sub_id, tipo_str, patente, provincia, dni, db_session_factory)
 
 
 async def ejecutar_sub_consulta(
