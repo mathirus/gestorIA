@@ -45,11 +45,13 @@ async def lifespan(app: FastAPI):
     yield
 
 
+from config import settings
+
 app = FastAPI(title="gestorIA API", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:3001", "http://localhost:3002"],
+    allow_origins=[o.strip() for o in settings.cors_origins.split(",")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
