@@ -1,4 +1,5 @@
 import sys
+from typing import List
 from pydantic_settings import BaseSettings
 
 
@@ -16,7 +17,7 @@ class Settings(BaseSettings):
     # --- Scrapers ---
     scraper_timeout: int = 30
     scraper_max_retries: int = 3
-    scraper_backoff: list[int] = [2, 8, 20]
+    scraper_backoff: List[int] = [2, 8, 20]
 
     # --- URLs de sitios gobierno ---
     agip_url: str = "https://lb.agip.gob.ar/ConsultaPat/"
