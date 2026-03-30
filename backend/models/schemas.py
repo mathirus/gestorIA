@@ -6,6 +6,7 @@ class ConsultaCreate(BaseModel):
     patente: str
     provincia: str  # "caba" | "buenos_aires"
     dni: str | None = None
+    cit: str | None = None  # Clave CIT de ARBA (opcional, para PBA)
 
 
 class SubConsultaResponse(BaseModel):

@@ -22,6 +22,7 @@ async def ejecutar_consulta(consulta_id: int, db_session_factory: async_sessionm
         patente = consulta.patente
         provincia = consulta.provincia
         dni = consulta.dni
+        cit = consulta.cit
 
         result = await db.execute(
             select(SubConsulta).where(SubConsulta.consulta_id == consulta_id)
@@ -39,7 +40,7 @@ async def ejecutar_consulta(consulta_id: int, db_session_factory: async_sessionm
 
     logger.info(f"Consulta #{consulta_id}: ejecutando {len(all_subs)} scrapers en secuencia")
     for sub_id, tipo_str in all_subs:
-        await _ejecutar_sub(sub_id, tipo_str, patente, provincia, dni, db_session_factory)
+        await _ejecutar_sub(sub_id, tipo_str, patente, provincia, dni, cit, db_session_factory)
 
 
 async def ejecutar_sub_consulta(
@@ -60,7 +61,7 @@ async def ejecutar_sub_consulta(
         sub = result.scalar_one()
 
     await _ejecutar_sub(
-        sub.id, tipo_str, consulta.patente, consulta.provincia, consulta.dni, db_session_factory
+        sub.id, tipo_str, consulta.patente, consulta.provincia, consulta.dni, consulta.cit, db_session_factory
     )
 
 
@@ -70,6 +71,7 @@ async def _ejecutar_sub(
     patente: str,
     provincia: str,
     dni: str | None,
+    cit: str | None,
     db_session_factory: async_sessionmaker,
 ):
     scraper = _scrapers[tipo]
@@ -80,7 +82,7 @@ async def _ejecutar_sub(
         sub.estado = EstadoConsulta.ejecutando.value
         await db.commit()
 
-    resultado: ScraperResult = await scraper.ejecutar(patente, provincia=provincia, dni=dni)
+    resultado: ScraperResult = await scraper.ejecutar(patente, provincia=provincia, dni=dni, cit=cit)
 
     async with db_session_factory() as db:
         result = await db.execute(select(SubConsulta).where(SubConsulta.id == sub_id))

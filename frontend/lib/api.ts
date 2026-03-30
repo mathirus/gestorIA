@@ -2,9 +2,10 @@ import { Consulta } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
 
-export async function crearConsulta(patente: string, provincia: string, dni?: string): Promise<Consulta> {
+export async function crearConsulta(patente: string, provincia: string, dni?: string, cit?: string): Promise<Consulta> {
   const body: Record<string, string> = { patente, provincia };
   if (dni) body.dni = dni;
+  if (cit) body.cit = cit;
   const res = await fetch(`${API_BASE}/api/consulta`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

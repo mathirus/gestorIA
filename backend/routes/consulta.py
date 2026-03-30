@@ -18,7 +18,7 @@ async def crear_consulta(
 ):
     patente = data.patente.upper().replace("-", "").replace(" ", "")
 
-    consulta = Consulta(patente=patente, provincia=data.provincia, dni=data.dni)
+    consulta = Consulta(patente=patente, provincia=data.provincia, dni=data.dni, cit=data.cit)
     db.add(consulta)
     await db.flush()
 

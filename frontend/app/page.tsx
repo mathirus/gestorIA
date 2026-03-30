@@ -10,6 +10,7 @@ export default function Home() {
   const [patente, setPatente] = useState("");
   const [provincia, setProvincia] = useState("caba");
   const [dni, setDni] = useState("");
+  const [cit, setCit] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function Home() {
     setError("");
 
     try {
-      const data = await crearConsulta(patente, provincia, dni || undefined);
+      const data = await crearConsulta(patente, provincia, dni || undefined, cit || undefined);
       router.push(`/consulta/${data.id}`);
     } catch {
       setError("No se pudo conectar con el servidor");
@@ -91,6 +92,22 @@ export default function Home() {
                 </option>
               </select>
             </div>
+
+            {provincia === "buenos_aires" && (
+              <div className="mb-8">
+                <label className="block text-gray-300 text-sm font-medium mb-2">
+                  Clave CIT de ARBA
+                  <span className="text-gray-500 font-normal ml-1">(opcional)</span>
+                </label>
+                <input
+                  type="password"
+                  value={cit}
+                  onChange={(e) => setCit(e.target.value)}
+                  placeholder="Si la tenés, permite consultar deuda de patentes en ARBA"
+                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-colors"
+                />
+              </div>
+            )}
 
             {error && (
               <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3">
