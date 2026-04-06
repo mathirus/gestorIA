@@ -61,6 +61,8 @@ class MultasPbaScraper(BaseScraper):
                 "--headless=new",
                 "--no-sandbox",
                 "--disable-dev-shm-usage",
+                "--disable-blink-features=AutomationControlled",
+                "--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
                 "--no-first-run",
                 "--no-default-browser-check",
                 "--disable-background-timer-throttling",
