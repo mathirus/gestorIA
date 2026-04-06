@@ -13,13 +13,14 @@ import subprocess
 import tempfile
 
 from playwright.async_api import async_playwright
+from config import settings
 from scrapers.base import BaseScraper
 from services import capsolver_client
 
 logger = logging.getLogger(__name__)
 
 ANSV_URL = "https://consultainfracciones.seguridadvial.gob.ar/"
-CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME_PATH = settings.chrome_path
 
 # DNI por defecto para consultas (configurable via kwargs)
 DEFAULT_DNI = "47700071"

@@ -19,7 +19,7 @@ class AgipScraper(BaseScraper):
         debt_data = {}
 
         async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True, channel="chrome")
+            browser = await p.chromium.launch(headless=True)
             page = await browser.new_page()
             try:
                 # Set up response interceptors before navigating

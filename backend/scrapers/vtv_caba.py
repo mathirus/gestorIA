@@ -23,7 +23,7 @@ class VtvCabaScraper(BaseScraper):
         sitekey = None
         try:
             async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True, channel="chrome")
+                browser = await p.chromium.launch(headless=True)
                 page = await browser.new_page()
                 try:
                     await page.goto(VTV_CABA_URL, timeout=15000)

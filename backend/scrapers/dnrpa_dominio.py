@@ -14,12 +14,13 @@ import tempfile
 
 import ddddocr
 from playwright.async_api import async_playwright
+from config import settings
 from scrapers.base import BaseScraper
 
 logger = logging.getLogger(__name__)
 
 DNRPA_URL = "https://www.dnrpa.gov.ar/portal_dnrpa/radicacion2.php"
-CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME_PATH = settings.chrome_path
 
 
 def _find_free_port() -> int:

@@ -12,13 +12,14 @@ import subprocess
 import tempfile
 
 from playwright.async_api import async_playwright
+from config import settings
 from scrapers.base import BaseScraper
 from services import capsolver_client
 
 logger = logging.getLogger(__name__)
 
 MULTAS_CABA_URL = "https://buenosaires.gob.ar/licenciasdeconducir/consulta-de-infracciones/?actas=transito"
-CHROME_PATH = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
+CHROME_PATH = settings.chrome_path
 
 
 def _find_free_port() -> int:
