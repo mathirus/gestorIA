@@ -34,6 +34,7 @@ export function cleanDnrpaField(value: string): string {
   return value.replace(/^\.\s*/, "").replace(/\t/g, " ").trim() || "-";
 }
 
-export function getProvinciaLabel(provincia: string): string {
+export function getProvinciaLabel(provincia: string | null | undefined): string {
+  if (!provincia) return "Detectando...";
   return provincia === "caba" ? "CABA" : provincia === "buenos_aires" ? "Buenos Aires" : provincia;
 }

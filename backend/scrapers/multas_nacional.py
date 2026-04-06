@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 ANSV_URL = "https://consultainfracciones.seguridadvial.gob.ar/"
 CHROME_PATH = settings.chrome_path
 
-# DNI por defecto para consultas (configurable via kwargs)
-DEFAULT_DNI = "47700071"
+# Genero por defecto si el usuario no lo especifica.
+# ANSV requiere DNI + genero. El DNI debe venir SIEMPRE del request (es del titular del vehiculo).
 DEFAULT_GENERO = "masculino"
 
 
@@ -40,7 +40,9 @@ class MultasNacionalScraper(BaseScraper):
         super().__init__(name="multas_nacional", max_retries=3, timeout=150)
 
     async def _ejecutar(self, patente: str, **kwargs) -> dict:
-        dni = kwargs.get("dni", DEFAULT_DNI)
+        dni = kwargs.get("dni")
+        if not dni:
+            raise RuntimeError("DNI del titular requerido para consultar multas nacionales (ANSV consulta por persona, no por vehiculo)")
         genero = kwargs.get("genero", DEFAULT_GENERO)
 
         # Mapear genero al indice del radio button ASP.NET

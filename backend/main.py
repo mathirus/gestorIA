@@ -15,7 +15,6 @@ from scrapers.agip import AgipScraper
 from scrapers.arba import ArbaScraper
 from scrapers.vtv_pba import VtvPbaScraper
 from scrapers.vtv_caba import VtvCabaScraper
-from scrapers.multabot import MultabotScraper
 from scrapers.dnrpa_dominio import DnrpaDominioScraper
 from scrapers.multas_caba import MultasCabaScraper
 from scrapers.multas_pba import MultasPbaScraper
@@ -37,7 +36,6 @@ async def lifespan(app: FastAPI):
     registrar_scraper(TipoConsulta.patentes_pba, ArbaScraper())
     registrar_scraper(TipoConsulta.vtv_pba, VtvPbaScraper())
     registrar_scraper(TipoConsulta.vtv_caba, VtvCabaScraper())
-    registrar_scraper(TipoConsulta.multas, MultabotScraper())
     registrar_scraper(TipoConsulta.multas_caba, MultasCabaScraper())
     registrar_scraper(TipoConsulta.multas_pba, MultasPbaScraper())
     registrar_scraper(TipoConsulta.multas_nacional, MultasNacionalScraper())

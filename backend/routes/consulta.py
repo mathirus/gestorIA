@@ -22,13 +22,19 @@ async def crear_consulta(
     db.add(consulta)
     await db.flush()
 
-    tipos = [TipoConsulta.costos, TipoConsulta.multas, TipoConsulta.multas_nacional, TipoConsulta.dominio]
-    if data.provincia == "caba":
-        tipos.extend([TipoConsulta.patentes_caba, TipoConsulta.vtv_caba, TipoConsulta.multas_caba])
-    elif data.provincia == "buenos_aires":
-        tipos.extend([TipoConsulta.patentes_pba, TipoConsulta.vtv_pba, TipoConsulta.multas_pba])
+    # Sub-consultas base que NO dependen de provincia.
+    # dominio (DNRPA) corre primero y de su resultado se infiere la provincia,
+    # luego consulta_manager agrega dinamicamente las province-specific.
+    tipos_base = [TipoConsulta.dominio, TipoConsulta.costos, TipoConsulta.multas_nacional]
 
-    for tipo in tipos:
+    # Si el usuario YA especificó provincia, agregamos las province-specific upfront
+    # (override manual del auto-detect).
+    if data.provincia == "caba":
+        tipos_base.extend([TipoConsulta.patentes_caba, TipoConsulta.vtv_caba, TipoConsulta.multas_caba])
+    elif data.provincia == "buenos_aires":
+        tipos_base.extend([TipoConsulta.patentes_pba, TipoConsulta.vtv_pba, TipoConsulta.multas_pba])
+
+    for tipo in tipos_base:
         sub = SubConsulta(consulta_id=consulta.id, tipo=tipo.value, estado=EstadoConsulta.pendiente.value)
         db.add(sub)
 

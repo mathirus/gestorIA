@@ -4,13 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { crearConsulta } from "@/lib/api";
-import { getProvinciaLabel } from "@/lib/utils";
 
 export default function Home() {
   const [patente, setPatente] = useState("");
-  const [provincia, setProvincia] = useState("caba");
   const [dni, setDni] = useState("");
-  const [cit, setCit] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -21,7 +18,7 @@ export default function Home() {
     setError("");
 
     try {
-      const data = await crearConsulta(patente, provincia, dni || undefined, cit || undefined);
+      const data = await crearConsulta(patente, dni || undefined);
       router.push(`/consulta/${data.id}`);
     } catch {
       setError("No se pudo conectar con el servidor");
@@ -62,9 +59,9 @@ export default function Home() {
               />
             </div>
 
-            <div className="mb-6">
+            <div className="mb-8">
               <label className="block text-gray-300 text-sm font-medium mb-2">
-                DNI del titular
+                DNI del titular del vehículo
               </label>
               <input
                 type="text"
@@ -75,39 +72,10 @@ export default function Home() {
                 required
                 maxLength={11}
               />
+              <p className="mt-2 text-xs text-gray-500">
+                Las multas nacionales (ANSV) se consultan por persona, no por vehículo. Ingresá el DNI del actual titular.
+              </p>
             </div>
-
-            <div className="mb-8">
-              <label className="block text-gray-300 text-sm font-medium mb-2">
-                Provincia
-              </label>
-              <select
-                value={provincia}
-                onChange={(e) => setProvincia(e.target.value)}
-                className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 appearance-none cursor-pointer transition-colors"
-              >
-                <option value="caba">{getProvinciaLabel("caba")}</option>
-                <option value="buenos_aires">
-                  {getProvinciaLabel("buenos_aires")}
-                </option>
-              </select>
-            </div>
-
-            {provincia === "buenos_aires" && (
-              <div className="mb-8">
-                <label className="block text-gray-300 text-sm font-medium mb-2">
-                  Clave CIT de ARBA
-                  <span className="text-gray-500 font-normal ml-1">(opcional)</span>
-                </label>
-                <input
-                  type="password"
-                  value={cit}
-                  onChange={(e) => setCit(e.target.value)}
-                  placeholder="Si la tenés, permite consultar deuda de patentes en ARBA"
-                  className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-colors"
-                />
-              </div>
-            )}
 
             {error && (
               <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 px-4 py-3">

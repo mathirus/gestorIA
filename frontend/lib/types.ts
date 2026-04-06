@@ -5,7 +5,6 @@ export type TipoConsulta =
   | "patentes_pba"
   | "vtv_pba"
   | "vtv_caba"
-  | "multas"
   | "multas_caba"
   | "multas_pba"
   | "multas_nacional"
@@ -32,7 +31,7 @@ export interface SubConsulta {
 export interface Consulta {
   id: number;
   patente: string;
-  provincia: string;
+  provincia: string | null; // null hasta que DNRPA la detecte
   created_at: string;
   estado_general: "en_proceso" | "completado" | "con_errores";
   sub_consultas: SubConsulta[];
@@ -202,7 +201,6 @@ export const TIPO_LABELS: Record<string, string> = {
   patentes_pba: "Deuda de patentes (PBA)",
   vtv_caba: "VTV (CABA)",
   vtv_pba: "VTV (Provincia BA)",
-  multas: "Multas (servicio)",
   multas_caba: "Multas de tránsito (CABA)",
   multas_pba: "Multas de tránsito (PBA)",
   multas_nacional: "Multas nacionales (ANSV)",

@@ -27,7 +27,14 @@
       "Bash(pip install:*)",
       "Bash(curl:*)",
       "Bash(taskkill:*)",
-      "Bash(playwright install:*)"
+      "Bash(playwright install:*)",
+      "Bash(gh auth:*)",
+      "Bash(gh repo:*)",
+      "Bash(gh api:*)",
+      "Bash(find:*)",
+      "Bash(dig:*)",
+      "Bash(nslookup:*)",
+      "Bash(ssh:*)"
     ]
   }
 }

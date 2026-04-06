@@ -23,7 +23,6 @@ class TipoConsulta(str, enum.Enum):
     patentes_pba = "patentes_pba"
     vtv_pba = "vtv_pba"
     vtv_caba = "vtv_caba"
-    multas = "multas"
     multas_caba = "multas_caba"
     multas_pba = "multas_pba"
     multas_nacional = "multas_nacional"
@@ -35,7 +34,7 @@ class Consulta(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     patente: Mapped[str] = mapped_column(String(10), index=True)
-    provincia: Mapped[str] = mapped_column(String(50))
+    provincia: Mapped[str | None] = mapped_column(String(50), nullable=True)
     dni: Mapped[str | None] = mapped_column(String(20), nullable=True)
     cit: Mapped[str | None] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
