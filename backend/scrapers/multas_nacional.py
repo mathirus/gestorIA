@@ -156,14 +156,20 @@ class MultasNacionalScraper(BaseScraper):
 
                 page.on("framenavigated", on_navigated)
 
-                btn = await page.query_selector('#ctl00_ContentPlaceHolder1_btnConsultar, button:has-text("Consultar"), input[type="submit"]')
-                if btn:
-                    await btn.click()
-                else:
-                    await page.evaluate("""() => {
-                        const btn = document.querySelector('input[type="submit"], button[type="submit"]');
-                        if (btn) btn.click();
-                    }""")
+                # Click via JS para bypassear check de Playwright (botón puede estar disabled o tener overlay)
+                # ID correcto: btnBuscar (no btnConsultar como antes)
+                clicked = await page.evaluate("""() => {
+                    const btn = document.getElementById('ctl00_ContentPlaceHolder1_btnBuscar')
+                        || document.querySelector('input[id*="btnBuscar"], input[id*="btnConsultar"]')
+                        || document.querySelector('input[type="submit"]');
+                    if (!btn) return false;
+                    btn.disabled = false;
+                    btn.removeAttribute('disabled');
+                    btn.click();
+                    return true;
+                }""")
+                if not clicked:
+                    raise RuntimeError("No se encontró el botón Consultar infracciones en ANSV")
 
                 logger.info("ANSV: boton clickeado, esperando PostBack")
 
